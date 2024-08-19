@@ -149,7 +149,7 @@ async function downloadYoutubeVideosToZip(youtubeUrls: string[]) {
 
   createDirIfNotExists(folder);
 
-  console.log(`Created temporary ${folder} folder`);
+  console.log(`Created temporaryy ${folder} folder`);
   const tempFiles: string[] = [];
 
   try {
