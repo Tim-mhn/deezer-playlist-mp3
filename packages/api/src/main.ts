@@ -22,6 +22,7 @@ import path from "node:path";
 import { Worker } from "worker_threads";
 import { fileURLToPath } from "node:url";
 import { fork } from "node:child_process";
+import { buildDeezerPlaylistToMp3UseCase } from "./core";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename);
@@ -205,55 +206,11 @@ async function downloadYoutubeVideosToZip(youtubeUrls: string[]) {
   }
 }
 async function main() {
-  const DEEZER_PLAYLIST_ID = "11797541801";
+  const playlistUrl = "https://www.deezer.com/us/playlist/12818235201";
 
-  const playlist = await ofetch<DeezerApi.PlaylistGetResponse>(
-    "https://www.deezer.com/ajax/gw-light.php",
-    {
-      method: "POST",
+  const usecase = buildDeezerPlaylistToMp3UseCase();
 
-      query: {
-        api_token: "j6s_LfTFsLupF%7E7pUfoAsmO27.pxTD91&cid=191144517",
-        api_version: "1.0",
-        method: "deezer.pagePlaylist",
-        input: "3",
-        cid: 12818235201,
-      },
-
-      body: {
-        nb: 10000,
-        start: 0,
-        playlist_id: DEEZER_PLAYLIST_ID,
-      },
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const tracks: Array<{ title: string; artist: string }> =
-    playlist.results.SONGS.data.map((song) => ({
-      title: song.SNG_TITLE,
-      artist: song.ART_NAME,
-    }));
-
-  console.log({ tracks });
-
-  //   const playlist = await res.json();
-
-  console.log(playlist);
-
-  const youtubeVideosIds = await Promise.all(
-    tracks.map((track) => searchYoutubeVideo(track))
-  );
-
-  const youtubeVideoUrls = youtubeVideosIds.map(
-    (id) => `https://www.youtube.com/watch?v=${id}`
-  );
-
-  console.log(youtubeVideosIds);
-
-  await downloadYoutubeVideosToZip(youtubeVideoUrls.slice(0, 3));
+  await usecase.downloadPlaylistSongs(playlistUrl);
 }
 
 main();

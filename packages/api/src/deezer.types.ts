@@ -1,7 +1,7 @@
 export declare namespace DeezerApi {
   export interface PlaylistGetResponse {
-    error: any[];
-    results: Results;
+    error: [] | Record<string, string>;
+    results: Partial<Results>;
   }
 
   export interface Results {
