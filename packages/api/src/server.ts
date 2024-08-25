@@ -2,14 +2,21 @@ import express from "express";
 import { resolve } from "node:path";
 import { buildDeezerPlaylistToMp3UseCase } from "./core";
 import { createReadStream } from "node:fs";
+import cors from "cors";
 
 const app = express();
+app.use(
+  cors({
+    allowedHeaders: ["Content-Type", "Content-Disposition"],
+    exposedHeaders: ["Content-Type", "Content-Disposition"],
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Deezer to MP3 API");
 });
 
-const usecase = buildDeezerPlaylistToMp3UseCase();
+const usecase = buildDeezerPlaylistToMp3UseCase({ localFiles: true });
 
 app.get("/deezer-mp3", async (req, res) => {
   const { playlistUrl } = req.query;
@@ -27,19 +34,28 @@ app.get("/deezer-mp3", async (req, res) => {
     });
   }
 
-  const relativeFile = await usecase.downloadPlaylistSongs(
-    playlistUrl as string
-  );
+  try {
+    const relativeFile = await usecase.downloadPlaylistSongs(
+      playlistUrl as string
+    );
 
-  const file = resolve(relativeFile);
+    const file = resolve(relativeFile);
 
-  res
-    .set("Content-Disposition", `attachment; filename="audios.zip"`)
-    .setHeader("Content-Type", "application/zip");
+    res
+      .set("Content-Disposition", `attachment; filename="audios.zip"`)
+      .setHeader("Content-Type", "application/zip");
 
-  // Stream the file to the client
-  const fileStream = createReadStream(file);
-  fileStream.pipe(res);
+    // Stream the file to the client
+    const fileStream = createReadStream(file);
+    fileStream.pipe(res);
+  } catch (err) {
+    res.status(500).send({
+      error:
+        err && typeof err === "object" && "message" in err
+          ? err?.message
+          : "Unexpected error",
+    });
+  }
 });
 
 const port = 3000;

@@ -21,13 +21,6 @@ export interface YoutubeSearch {
 
 type ZipFile = string;
 export interface VideosDownloader {
-  //   downloadVideo({
-  //     url,
-  //     filename,
-  //   }: {
-  //     url: string;
-  //     filename: string;
-  //   }): Promise<void>;
   downloadVideosToZip(urls: YoutubeUrl[]): Promise<ZipFile>;
 }
 
@@ -51,9 +44,8 @@ export class DeezerPlaylistToMp3UseCase {
   ) {}
 
   async downloadPlaylistSongs(playlistId: string) {
-    const songs = await this.playlistSongsRepository.getPlaylistSongs(
-      playlistId
-    );
+    const songs =
+      await this.playlistSongsRepository.getPlaylistSongs(playlistId);
 
     const youtubeUrls = await Promise.all(
       songs.map(async (song) => {
@@ -67,13 +59,19 @@ export class DeezerPlaylistToMp3UseCase {
   }
 }
 
-class DeezerError extends Error {
-  constructor() {
-    super(`DeezerError`);
+class InvalidPlaylistUrl extends Error {
+  constructor(playlistUrl: string) {
+    super(`${playlistUrl} is not a valid url`);
   }
 }
 class DeezerPlaylistRepository implements PlaylistRepository {
   async getPlaylistSongs(playlistUrl: string): Promise<Song[]> {
+    return [];
+    try {
+      new URL(playlistUrl);
+    } catch (err) {
+      throw new InvalidPlaylistUrl(playlistUrl);
+    }
     const response = await fetch(playlistUrl, {
       method: "GET",
     });
@@ -88,7 +86,6 @@ class DeezerPlaylistRepository implements PlaylistRepository {
 
     const state = JSON.parse(stringifiedState);
 
-    console.log(state);
     const songs = state.SONGS.data.map((song: any) => ({
       title: song.SNG_TITLE as string,
       artist: song.ART_NAME as string,
@@ -114,6 +111,14 @@ export class YoutubeSearchService implements YoutubeSearch {
     const videoId = searchResponse.items[0].id.videoId || "";
 
     return `https://www.youtube.com/watch?v=${videoId}`;
+  }
+}
+
+export class LocalVideosDownloader implements VideosDownloader {
+  async downloadVideosToZip(urls: YoutubeUrl[]): Promise<ZipFile> {
+    const localAudiosZip = "local/audios.zip";
+
+    return localAudiosZip;
   }
 }
 
@@ -211,10 +216,14 @@ const createDirIfNotExists = (dir: string) => {
   }
 };
 
-export const buildDeezerPlaylistToMp3UseCase = () => {
+export const buildDeezerPlaylistToMp3UseCase = (
+  { localFiles } = { localFiles: false }
+) => {
   const playlistRepository = new DeezerPlaylistRepository();
   const youtubeSearch = new YoutubeSearchService();
-  const videosDownloader = new YoutubeVideosDownloader();
+  const videosDownloader = localFiles
+    ? new LocalVideosDownloader()
+    : new YoutubeVideosDownloader();
 
   return new DeezerPlaylistToMp3UseCase(
     playlistRepository,
