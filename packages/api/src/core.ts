@@ -1,5 +1,4 @@
 import { ofetch } from "ofetch";
-import { DeezerApi } from "./deezer.types";
 import { YoutubeApi } from "./youtube.types";
 import youtubeDl from "youtube-dl-exec";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "fs";
@@ -66,7 +65,6 @@ class InvalidPlaylistUrl extends Error {
 }
 class DeezerPlaylistRepository implements PlaylistRepository {
   async getPlaylistSongs(playlistUrl: string): Promise<Song[]> {
-    return [];
     try {
       new URL(playlistUrl);
     } catch (err) {

@@ -58,7 +58,7 @@ app.get("/deezer-mp3", async (req, res) => {
   }
 });
 
-const port = 3000;
+const port = process.env.PORT;
 app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
 });
