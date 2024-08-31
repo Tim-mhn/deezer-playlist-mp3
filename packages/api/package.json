@@ -10,6 +10,7 @@
     "dev": "tsx watch --env-file=.env.dev src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "deploy": "yarn i && yarn build && yarn start",
     "build:ci": "tsc && npm run build"
   },
   "keywords": [],
