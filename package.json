@@ -22,5 +22,6 @@
   "devDependencies": {
     "tsx": "^4.17.0",
     "typescript": "^5.5.4"
-  }
+  },
+  "packageManager": "yarn@4.4.0"
 }

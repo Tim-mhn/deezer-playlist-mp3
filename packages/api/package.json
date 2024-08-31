@@ -43,5 +43,6 @@
     "request-promise": "^4.2.6",
     "util": "^0.12.5",
     "youtube-dl-exec": "^3.0.7"
-  }
+  },
+  "packageManager": "yarn@4.4.0"
 }
