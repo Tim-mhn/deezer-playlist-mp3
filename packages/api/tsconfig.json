@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES2015" /* Set the JavaScript language version for emitted 
+    /* Modules */,
+    "module": "ESNext" /* Specify what module code is generated. */,
+    "moduleResolution": "Bundler",
+    // "rootDir": "./",                                  /* Specify the root folder within your source files. */
+    /* Allow 'import x from y' when a module doesn't have a default export. */
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    // "preserveSymlinks": true,                         /* Disable resolving symlinks to their realpath. This correlates to the same flag in node. */
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+
+    /* Type Checking */
+    "strict": true /* Enable all strict type-checking options. */,
+
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */,
+
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}

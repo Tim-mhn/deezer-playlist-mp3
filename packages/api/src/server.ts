@@ -1,6 +1,6 @@
 import express from "express";
 import { resolve } from "node:path";
-import { buildDeezerPlaylistToMp3UseCase } from "./core";
+import { buildDeezerPlaylistToMp3UseCase } from "./core.js";
 import { createReadStream } from "node:fs";
 import cors from "cors";
 
