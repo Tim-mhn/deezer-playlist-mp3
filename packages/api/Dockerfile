@@ -8,25 +8,26 @@ RUN apt-get update && \
 
 RUN apt-get install curl -y
 
-# Install Python 3.7
-RUN apt install software-properties-common -y
+# # Install Python 3.7 for youtube-dl-exec
+# RUN apt install software-properties-common -y
 
+# RUN add-apt-repository ppa:deadsnakes/ppa -y
 
-
-RUN add-apt-repository ppa:deadsnakes/ppa -y
-
-RUN apt install python3.7 -y
+# RUN apt install python3.7 -y
 
 
 
 # Install Node 
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
+    && export NVM_DIR="$HOME/.nvm" \
+    && . $NVM_DIR/nvm.sh \
+    && nvm install 20.11.1 \
+    && nvm alias default 20.11.1 \
+    && nvm use default \
+    && node --version \
+    && corepack enable \
+    && corepack prepare yarn@4.4.0 --activate
 
-RUN source /root/.bashrc
-RUN nvm install 20.11.1
-
-
-RUN corepack enable
 
 
 WORKDIR /app
