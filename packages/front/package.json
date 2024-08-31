@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "husky",
-    "test": "vitest"
+    "test": "vitest",
+    "start": "caddy"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.0",
