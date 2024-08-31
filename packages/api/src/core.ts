@@ -1,5 +1,5 @@
 import { ofetch } from "ofetch";
-import { YoutubeApi } from "./youtube.types.ts";
+import { YoutubeApi } from "./youtube.types.js";
 import youtubeDl from "youtube-dl-exec";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "fs";
 import archiver from "archiver";
