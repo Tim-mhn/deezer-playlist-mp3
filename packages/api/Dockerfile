@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+SHELL ["/bin/bash", "-c"]
+
 RUN apt-get update && \
       apt-get -y install sudo && \
       apt update
