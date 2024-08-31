@@ -1,11 +1,7 @@
-FROM node:20.17.0-alpine
+FROM ubuntu:18.04
 
-WORKDIR /app
-
-
-COPY src src
-COPY package.json package.json 
-COPY tsconfig.json tsconfig.json
+RUN apt-get update && \
+      apt-get -y install sudo
 
 # Install Python 3.7
 RUN apt install software-properties-common
@@ -14,7 +10,23 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y
 
 RUN apt install python3.7 
 
+# Install Node 
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+
+RUN nvm use v20.11.1
+
 RUN corepack enable
+
+
+WORKDIR /app
+
+
+COPY src src
+COPY package.json package.json 
+COPY tsconfig.json tsconfig.json
+
+
+
 
 RUN yarn set version 4.4.0
 
