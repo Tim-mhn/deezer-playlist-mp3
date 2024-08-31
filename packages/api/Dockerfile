@@ -20,7 +20,9 @@ RUN apt install python3.7 -y
 # Install Node 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
+RUN source /root/.bashrc
 RUN nvm install 20.11.1
+
 
 RUN corepack enable
 
