@@ -27,8 +27,11 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | b
     && nvm use default \
     && node --version 
 
-ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
-ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+# Set environment variables
+ENV NVM_DIR=/root/.nvm
+ENV NODE_VERSION=20.11.1
+ENV NODE_PATH=$NVM_DIR/v$NODE_VERSION/lib/node_modules
+ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 
 RUN corepack enable && corepack prepare yarn@4.4.0 --activate
@@ -41,14 +44,11 @@ WORKDIR /app
 COPY src src
 COPY package.json package.json 
 COPY tsconfig.json tsconfig.json
+COPY .yarnrc.yml .yarnrc.yml
 
+# Install dependencies and build
+RUN . $NVM_DIR/nvm.sh && yarn set version 4.4.0 && yarn install && yarn build
 
+RUN ls -al /app
 
-
-RUN yarn set version 4.4.0
-
-RUN yarn install
-
-RUN yarn build
-
-CMD ["node", "dist/server.js"]
+CMD ["yarn", "start"]
