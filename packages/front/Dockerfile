@@ -4,16 +4,19 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY package*.json ./
+COPY package.json ./
+
+RUN corepack enable && corepack prepare yarn@4.4.0 --activate
+
 
 # Install dependencies
-RUN npm install
+RUN yarn install
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN yarn run build
 
 # Stage 2: Serve the application with Caddy
 FROM caddy:2.4.6-alpine
