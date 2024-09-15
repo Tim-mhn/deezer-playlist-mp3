@@ -22,7 +22,10 @@ log {
 }
 
 # health check for railway
-rewrite /health /*
+@healthcheck {
+    path /health
+}
+respond @healthcheck 200
 
 root * dist
 file_server
