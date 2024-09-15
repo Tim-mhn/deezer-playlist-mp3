@@ -16,7 +16,9 @@ app.get("/", (req, res) => {
   res.send("Welcome to the Deezer to MP3 API");
 });
 
-const usecase = buildDeezerPlaylistToMp3UseCase({ localFiles: true });
+const usecase = buildDeezerPlaylistToMp3UseCase({
+  localFiles: false,
+});
 
 app.get("/deezer-mp3", async (req, res) => {
   const { playlistUrl } = req.query;

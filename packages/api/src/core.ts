@@ -149,7 +149,7 @@ export class YoutubeVideosDownloader implements VideosDownloader {
     createDirIfNotExists(folder);
 
     const files = await Promise.all(
-      urls.slice(0, 2).map(async (url, index) => {
+      urls.map(async (url, index) => {
         const filename = `${hash}-audio-${index}.mp3`;
         await this.downloadSingleVideo({ youtubeUrl: url, filename });
 
