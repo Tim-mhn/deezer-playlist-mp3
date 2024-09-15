@@ -20,7 +20,7 @@ export interface YoutubeSearch {
 
 type ZipFile = string;
 export interface VideosDownloader {
-  downloadVideosToZip(urls: YoutubeUrl[]): Promise<ZipFile>;
+  downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile>;
 }
 
 export interface FileZipper {
@@ -46,15 +46,21 @@ export class DeezerPlaylistToMp3UseCase {
     const songs =
       await this.playlistSongsRepository.getPlaylistSongs(playlistId);
 
-    const youtubeUrls = await Promise.all(
-      songs.map(async (song) => {
-        return this.youtubeSearch.searchSongUrl(song);
+    const youtubeVideos = await Promise.all(
+      songs.map<Promise<YoutubeMusicVideo>>(async (song) => {
+        const url = await this.youtubeSearch.searchSongUrl(song);
+        const musicVideo: YoutubeMusicVideo = {
+          url,
+          artist: song.artist,
+          track: song.title,
+        };
+        return musicVideo;
       })
     );
 
-    console.log({ youtubeUrls });
+    console.log({ youtubeVideos });
 
-    return await this.videosDownloader.downloadVideosToZip(youtubeUrls);
+    return await this.videosDownloader.downloadVideosToZip(youtubeVideos);
   }
 }
 
@@ -113,13 +119,18 @@ export class YoutubeSearchService implements YoutubeSearch {
 }
 
 export class LocalVideosDownloader implements VideosDownloader {
-  async downloadVideosToZip(urls: YoutubeUrl[]): Promise<ZipFile> {
+  async downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile> {
     const localAudiosZip = "local/audios.zip";
 
     return localAudiosZip;
   }
 }
 
+type YoutubeMusicVideo = {
+  url: string;
+  artist: string;
+  track: string;
+};
 export class YoutubeVideosDownloader implements VideosDownloader {
   private async downloadSingleVideo({
     youtubeUrl,
@@ -140,7 +151,7 @@ export class YoutubeVideosDownloader implements VideosDownloader {
     );
   }
 
-  async downloadVideosToZip(urls: YoutubeUrl[]): Promise<ZipFile> {
+  async downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile> {
     const hash = Date.now().toString();
     const folder = `tmp/${hash}`;
 
@@ -149,9 +160,9 @@ export class YoutubeVideosDownloader implements VideosDownloader {
     createDirIfNotExists(folder);
 
     const files = await Promise.all(
-      urls.map(async (url, index) => {
-        const filename = `${hash}-audio-${index}.mp3`;
-        await this.downloadSingleVideo({ youtubeUrl: url, filename });
+      videos.map(async (video, index) => {
+        const filename = `${video.artist} - ${video.track}.mp3`;
+        await this.downloadSingleVideo({ youtubeUrl: video.url, filename });
 
         return filename;
       })
