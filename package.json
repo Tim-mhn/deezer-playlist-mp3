@@ -7,7 +7,9 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "format": "yarn prettier . --write"
+    "format": "yarn prettier . --write",
+    "front:install": "yarn workspace @deezer-mp3/front install",
+    "front:build": "yarn workspace @deezer-mp3/front build"
   },
   "keywords": [],
   "author": "",

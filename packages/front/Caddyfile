@@ -23,7 +23,7 @@ log {
 
 # health check for railway
 @healthcheck {
-    path /health
+	path /health
 }
 respond @healthcheck 200
 
