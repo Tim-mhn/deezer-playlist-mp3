@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY package.json ./
+COPY package.json ../../yarn.lock ./
 
 RUN corepack enable && corepack prepare yarn@4.4.0 --activate
 
@@ -15,6 +15,7 @@ RUN yarn install
 # Copy the rest of the application code
 COPY . .
 
+RUN
 # Build the application
 RUN yarn run build
 
