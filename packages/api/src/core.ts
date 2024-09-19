@@ -3,6 +3,7 @@ import { YoutubeApi } from "./youtube.types.js";
 import youtubeDl from "youtube-dl-exec";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "fs";
 import archiver from "archiver";
+import type { DeezerApi } from "./deezer.types.js";
 
 type Song = {
   title: string;
@@ -99,6 +100,33 @@ class DeezerPlaylistRepository implements PlaylistRepository {
   }
 }
 
+class DeezerApiPlaylistRepository implements PlaylistRepository {
+  constructor(private cookie: string) {}
+
+  async getPlaylistSongs(playlistId: string): Promise<Song[]> {
+    const res = await fetch(
+      "https://www.deezer.com/ajax/gw-light.php?method=deezer.pagePlaylist&input=3&api_version=1.0&api_token=zI-xy320qKmY0yUaAAS04Da873v1qDnr&cid=493191828",
+      {
+        method: "POST",
+        body: `{"playlist_id":${playlistId},"nb":10000,"start":0,"lang":"us","tab":0,"tags":true,"header":true}`,
+        headers: {
+          "Content-Type": "text/plain;charset=UTF-8",
+          Cookie: this.cookie,
+        },
+      }
+    );
+
+    const data = (await res.json()) as DeezerApi.PlaylistGetResponse;
+
+    return (
+      data.results.SONGS?.data.map((song) => ({
+        title: song.SNG_TITLE,
+        artist: song.ART_NAME,
+      })) || []
+    );
+  }
+}
+
 export class YoutubeSearchService implements YoutubeSearch {
   async searchSongUrl(song: Song): Promise<YoutubeUrl> {
     const query = `${song.title} ${song.artist}`;
@@ -131,6 +159,9 @@ type YoutubeMusicVideo = {
   artist: string;
   track: string;
 };
+
+const isDev = process.env.DEV === "true";
+console.log({ isDev });
 export class YoutubeVideosDownloader implements VideosDownloader {
   private async downloadSingleVideo({
     youtubeUrl,
@@ -161,7 +192,8 @@ export class YoutubeVideosDownloader implements VideosDownloader {
 
     const files = await Promise.all(
       videos.map(async (video, index) => {
-        const filename = `${video.artist} - ${video.track}.mp3`;
+        let filename = `${video.artist} - ${video.track}.mp3`;
+        if (isDev) filename = `local/${filename}`;
         await this.downloadSingleVideo({ youtubeUrl: video.url, filename });
 
         return filename;
@@ -228,7 +260,11 @@ const createDirIfNotExists = (dir: string) => {
 export const buildDeezerPlaylistToMp3UseCase = (
   { localFiles } = { localFiles: false }
 ) => {
-  const playlistRepository = new DeezerPlaylistRepository();
+  const deezerApiCookie = process.env.DEEZER_API_COOKIE;
+  if (!deezerApiCookie)
+    throw new Error("DEEZER_API_COOKIE environment variable not provided");
+
+  const playlistRepository = new DeezerApiPlaylistRepository(deezerApiCookie);
   const youtubeSearch = new YoutubeSearchService();
   const videosDownloader = localFiles
     ? new LocalVideosDownloader()
