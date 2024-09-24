@@ -18,6 +18,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       
       <DeezerDownloaderPage />
+
+      {/* <EventsConsumer /> */}
     </QueryClientProvider>
   )
 }

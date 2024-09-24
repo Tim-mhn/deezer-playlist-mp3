@@ -1,11 +1,12 @@
 import { ofetch } from "ofetch";
-import { YoutubeApi } from "./youtube.types.js";
+import type { YoutubeApi } from "./youtube.types.js";
 import youtubeDl from "youtube-dl-exec";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "fs";
 import archiver from "archiver";
 import type { DeezerApi } from "./deezer.types.js";
+import { playlistBuilder } from "./mocks.js";
 
-type Song = {
+export type Song = {
   title: string;
   artist: string;
 };
@@ -19,7 +20,7 @@ export interface YoutubeSearch {
   searchSongUrl(song: Song): Promise<YoutubeUrl>;
 }
 
-type ZipFile = string;
+export type ZipFile = string;
 export interface VideosDownloader {
   downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile>;
 }
@@ -100,12 +101,20 @@ class DeezerPlaylistRepository implements PlaylistRepository {
   }
 }
 
+export class FakeDeezerPlaylistRepository implements PlaylistRepository {
+  async getPlaylistSongs(playlistId: string): Promise<Song[]> {
+    return playlistBuilder();
+  }
+}
+
 class DeezerApiPlaylistRepository implements PlaylistRepository {
   constructor(private cookie: string) {}
 
   async getPlaylistSongs(playlistId: string): Promise<Song[]> {
+    console.group("DeezerApiPlaylistRepository");
+
     const res = await fetch(
-      "https://www.deezer.com/ajax/gw-light.php?method=deezer.pagePlaylist&input=3&api_version=1.0&api_token=zI-xy320qKmY0yUaAAS04Da873v1qDnr&cid=493191828",
+      `https://www.deezer.com/ajax/gw-light.php?method=deezer.pagePlaylist&input=3&api_version=1.0&api_token=${process.env.DEEZER_API_TOKEN}&cid=${process.env.DEEZER_API_CID}`,
       {
         method: "POST",
         body: `{"playlist_id":${playlistId},"nb":10000,"start":0,"lang":"us","tab":0,"tags":true,"header":true}`,
@@ -118,6 +127,9 @@ class DeezerApiPlaylistRepository implements PlaylistRepository {
 
     const data = (await res.json()) as DeezerApi.PlaylistGetResponse;
 
+    console.log({ data: data.results });
+    console.log({ error: data.error });
+    console.groupEnd();
     return (
       data.results.SONGS?.data.map((song) => ({
         title: song.SNG_TITLE,
@@ -154,7 +166,7 @@ export class LocalVideosDownloader implements VideosDownloader {
   }
 }
 
-type YoutubeMusicVideo = {
+export type YoutubeMusicVideo = {
   url: string;
   artist: string;
   track: string;
@@ -184,7 +196,7 @@ export class YoutubeVideosDownloader implements VideosDownloader {
 
   async downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile> {
     const hash = Date.now().toString();
-    const folder = `tmp/${hash}`;
+    const folder = `public/tmp/${hash}`;
 
     const zipPath = `${folder}/audios.zip`;
 
@@ -192,8 +204,7 @@ export class YoutubeVideosDownloader implements VideosDownloader {
 
     const files = await Promise.all(
       videos.map(async (video, index) => {
-        let filename = `${video.artist} - ${video.track}.mp3`;
-        if (isDev) filename = `local/${filename}`;
+        const filename = `${video.artist} - ${video.track}.mp3`;
         await this.downloadSingleVideo({ youtubeUrl: video.url, filename });
 
         return filename;
@@ -202,7 +213,8 @@ export class YoutubeVideosDownloader implements VideosDownloader {
 
     await this.zipFiles({ files, zipPath });
 
-    return zipPath;
+    const zipPathUrl = zipPath.replace("public/", "");
+    return zipPathUrl;
   }
 
   private async zipFiles({
@@ -270,9 +282,5 @@ export const buildDeezerPlaylistToMp3UseCase = (
     ? new LocalVideosDownloader()
     : new YoutubeVideosDownloader();
 
-  return new DeezerPlaylistToMp3UseCase(
-    playlistRepository,
-    youtubeSearch,
-    videosDownloader
-  );
+  return { playlistRepository, youtubeSearch, videosDownloader };
 };
