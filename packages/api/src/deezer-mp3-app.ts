@@ -16,7 +16,7 @@ export class DownloadedFilesPublisher {
     topic: string,
     { file, id }: { file: ZipFile; id: string }
   ): void {
-    console.log(`Publishing file ${file} for topic ${topic}`);
+    // console.log(`Publishing file ${file} for topic ${topic}`);
 
     (this.subscribers.get(topic) || []).forEach((subscriber) =>
       subscriber({ file, id })
@@ -88,7 +88,7 @@ export class Deezer2Mp3App {
     let batchesCompleted = 0;
     songsBatches.forEach((batch) =>
       this.songsDownloader.downloadSongs(batch.songs).then((zipFile) => {
-        console.log(`Published file ${zipFile} for playlist ${playlistId}`);
+        // console.log(`Published file ${zipFile} for playlist ${playlistId}`);
         this.filesPublisher.publishFile(playlistId, {
           file: zipFile,
           id: batch.id,
