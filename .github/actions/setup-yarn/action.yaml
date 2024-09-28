@@ -1,0 +1,9 @@
+name: "Setup Yarn v4"
+description: "Enable corepack and install Yarn v4"
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        corepack enable
+        corepack install --global $(jq -r '.packageManager' package.json)
+      shell: bash

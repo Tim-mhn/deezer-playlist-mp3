@@ -1,0 +1,11 @@
+name: 'Node Modules Cache'
+description: 'Caching node_modules directory'
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node_modules-
