@@ -22,14 +22,14 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | b
     && export NVM_DIR="$HOME/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
     && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" \
-    && nvm install 20.11.1 \
-    && nvm alias default 20.11.1 \
+    && nvm install 22.6.0 \
+    && nvm alias default 22.6.0 \
     && nvm use default \
     && node --version 
 
 # Set environment variables
 ENV NVM_DIR=/root/.nvm
-ENV NODE_VERSION=20.11.1
+ENV NODE_VERSION=22.6.0
 ENV NODE_PATH=$NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
@@ -47,7 +47,7 @@ COPY tsconfig.json tsconfig.json
 COPY .yarnrc.yml .yarnrc.yml
 
 # Install dependencies and build
-RUN . $NVM_DIR/nvm.sh && yarn set version 4.4.0 && yarn install && yarn build
+RUN . $NVM_DIR/nvm.sh && yarn set version 4.4.0 && yarn install && yarn run build:prod
 
 RUN ls -al /app
 
