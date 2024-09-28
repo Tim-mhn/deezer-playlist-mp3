@@ -13,11 +13,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: "./.github/actions/setup-node"
       - uses: "./.github/actions/setup-yarn"
       - uses: "./.github/actions/node-modules-cache"
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
   tests:
     runs-on: ubuntu-latest
@@ -25,6 +26,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: "./.github/actions/setup-node"
       - uses: "./.github/actions/setup-yarn"
       - uses: "./.github/actions/node-modules-cache"
 
@@ -38,6 +40,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: "./.github/actions/setup-node"
       - uses: "./.github/actions/setup-yarn"
       - uses: "./.github/actions/node-modules-cache"
 
@@ -51,6 +54,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: "./.github/actions/setup-node"
       - uses: "./.github/actions/setup-yarn"
       - uses: "./.github/actions/node-modules-cache"
 

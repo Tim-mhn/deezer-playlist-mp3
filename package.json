@@ -10,8 +10,8 @@
     "front:install": "yarn workspace @deezer-mp3/front install",
     "front:build": "yarn workspace @deezer-mp3/front build",
     "test": "yarn workspaces foreach -A run test",
-    "typecheck": "yarn workspaces foreach -At run typecheck",
-    "build": "yarn workspaces foreach -At run build"
+    "typecheck": "yarn workspaces foreach -A run typecheck",
+    "build": "yarn workspaces foreach -A run build"
   },
   "keywords": [],
   "author": "",
