@@ -6,10 +6,12 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "format": "yarn prettier . --write",
     "front:install": "yarn workspace @deezer-mp3/front install",
-    "front:build": "yarn workspace @deezer-mp3/front build"
+    "front:build": "yarn workspace @deezer-mp3/front build",
+    "test": "yarn workspaces foreach -A run test",
+    "typecheck": "yarn workspaces foreach -At run typecheck",
+    "build": "yarn workspaces foreach -At run build"
   },
   "keywords": [],
   "author": "",
@@ -18,8 +20,12 @@
     "packages/*"
   ],
   "volta": {
-    "node": "20.11.1",
+    "node": "22.6.0",
     "yarn": "4.4.0"
+  },
+  "engines": {
+    "yarn": "4.4.0",
+    "node": "22.6.0"
   },
   "devDependencies": {
     "tsx": "^4.17.0",

@@ -10,9 +10,10 @@
     "test:watch": "node --watch --experimental-strip-types src/**/*.spec.ts",
     "dev": "tsx watch --env-file=.env.dev src/server.ts",
     "build": "tsc",
+    "lint": "eslint .",
     "start": "node dist/server.js",
     "deploy": "yarn i && yarn build && yarn start",
-    "build:ci": "tsc && npm run build"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -42,7 +43,6 @@
     "youtube-dl-exec": "^3.0.7"
   },
   "volta": {
-    "node": "22.6.0",
-    "yarn": "4.4.0"
+    "extends": "../../package.json"
   }
 }
