@@ -17,19 +17,7 @@ type ApiSongsBatch = { id: string; songs: Array<Song>}
 type ApiSongsBatches = Array<ApiSongsBatch>
 
 type SongsBatches = Array<ApiSongsBatch & { pending: boolean}>
-const downloadFile = async (blob: Blob, name: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
-    a.href = url;
-    a.download = name; // add custom extension here
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-  
-    // Remove "a" tag from the body
-    a.remove();
-  };
+
   
   
   
@@ -128,7 +116,7 @@ const downloadFile = async (blob: Blob, name: string) => {
           
 
 
-          const audiosFileUrl = `http://localhost:3000/${file}`;
+          const audiosFileUrl = `${import.meta.env.VITE_APP_API_BASE_URL}/${file}`;
           await downloadFileFromUrl(audiosFileUrl)
 
           completedBatch.pending = false
@@ -170,10 +158,6 @@ const downloadFile = async (blob: Blob, name: string) => {
     },
   });
 
-  const downloadPlaylist = async (playlistUrl: string) => {
-    await downloadFileFromUrl(`${import.meta.env.VITE_APP_API_BASE_URL}/deezer-mp3?playlistUrl=${playlistUrl}`)
-  
-  }
 
   return  <form
   className="flex flex-col gap-4"
