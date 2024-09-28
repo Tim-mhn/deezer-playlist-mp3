@@ -6,8 +6,18 @@ import { Label } from "@radix-ui/react-label";
 import { FieldApi, FieldValidateFn, useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { validateDeezerPlaylistUrl } from "./url.validators";
+import { downloadFileFromUrl } from "@/utils/downloadFile";
+import { useRef, useState } from "react";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { IconCheckCircle } from "./CheckIcon";
 
-const convertFiletoBlobAndDownload = async (blob: Blob, name: string) => {
+
+type Song = { title: string; artist: string}
+type ApiSongsBatch = { id: string; songs: Array<Song>}
+type ApiSongsBatches = Array<ApiSongsBatch>
+
+type SongsBatches = Array<ApiSongsBatch & { pending: boolean}>
+const downloadFile = async (blob: Blob, name: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.style.display = "none";
@@ -62,31 +72,107 @@ const convertFiletoBlobAndDownload = async (blob: Blob, name: string) => {
     },
   });
 
+
+  const [_songsBatches, _setSongsBatches] = useState<SongsBatches>([])
+
+
+
+  const songsBatches = useRef(_songsBatches);
+
+  const setSongsBatches = (newSongsBatches: SongsBatches) => {
+    songsBatches.current = newSongsBatches
+    _setSongsBatches(newSongsBatches)
+  }
+
+
+
   const { isPending, isError, mutate } = useMutation({
     mutationKey: ["deezer-playlist", form.state.values.playlistUrl],
     
-    mutationFn: ({ playlistUrl}: { playlistUrl: string}) => downloadPlaylist(playlistUrl),
+    mutationFn: async ({ playlistUrl}: { playlistUrl: string}) => {
+   
+
+
+
+      
+
+      const source = new EventSource(`//localhost:3000/events?playlistUrl=${playlistUrl}`, )
+
+      source.onmessage = async function (event)  {
+
+        console.group('Received batch audio file')
+          const data = event.data as string;
+
+          const file = data.match(/file=(.*?);/)?.[1]
+          const batchId = data.match(/id=(.*?);/)?.[1]
+
+          if (!file || !batchId) {
+            console.groupEnd()
+            throw new Error('Invalid data received from server')
+          }
+
+            console.log({ file  , batchId})
+
+
+
+          const completedBatch = songsBatches.current.find(b => b.id === batchId)
+
+          if (!completedBatch) {
+            console.groupEnd()
+
+            throw new Error('Batch not found')
+          }
+
+
+
+          
+
+
+          const audiosFileUrl = `http://localhost:3000/${file}`;
+          await downloadFileFromUrl(audiosFileUrl)
+
+          completedBatch.pending = false
+
+
+          setSongsBatches([...songsBatches.current])
+
+
+          console.groupEnd()
+
+  
+      }
+  
+      source.onerror = () => {
+          source.close()
+          console.error("an error occurred when connecting to SSE")
+      }
+
+      
+  
+      source.onopen = () => {
+          console.log('Opening connections ...')
+      }
+
+      const r = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/deezer-mp3?playlistUrl=${playlistUrl}`,{ method: 'GET'})
+      const songsBatchesData  = await r.json() as ApiSongsBatches
+
+
+      
+
+      const songsBatchesWithPendingStatus = songsBatchesData.map(batch => ({ ...batch, pending: true}))
+      console.log({ songsBatchesWithPendingStatus})
+
+      setSongsBatches([...songsBatchesWithPendingStatus])
+
+      
+
+
+    },
   });
 
   const downloadPlaylist = async (playlistUrl: string) => {
-    const res = await fetch(
-      `${import.meta.env.VITE_APP_API_BASE_URL}/deezer-mp3?playlistUrl=${playlistUrl}`,
-      {
-        method: "GET",
-      },
-    );
-
-    const blob = await res.blob();
-
-    const filename =
-      res.headers
-        .get("content-disposition")
-        ?.split("filename=")[1]
-        .split(";")[0].replace(/"/g, "") || "deezer-audios.zip";
-
-        console.log({ filename})
-
-    await convertFiletoBlobAndDownload(blob, filename);
+    await downloadFileFromUrl(`${import.meta.env.VITE_APP_API_BASE_URL}/deezer-mp3?playlistUrl=${playlistUrl}`)
+  
   }
 
   return  <form
@@ -136,5 +222,33 @@ const convertFiletoBlobAndDownload = async (blob: Blob, name: string) => {
       <AlertTitle>Error</AlertTitle>
       <AlertDescription>We were unable to download songs from your Deezer playlist. Are you sure the url is correct ? </AlertDescription>
     </Alert> }
+
+      <ol>
+    { _songsBatches.map((batch, index) => <li key={batch.id} className="flex flex-row justify-between gap-2"> 
+      <div className="text-md font-semibold">
+      Batch {index + 1}
+      </div>
+
+      <div className="flex flex-col text-xs font-extralight">
+      { batch.songs.map(song => <div className="flex flex-row gap-2"> <div> { song.title } - {song.artist}</div></div>
+    )}
+
+
+
+
+
+      </div>
+
+      { batch.pending  ? <LoadingSpinner  /> : <IconCheckCircle /> }
+
+
+
+      </li>)}
+
+
+    </ol>
+
+
+
   </form>
 }

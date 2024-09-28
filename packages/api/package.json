@@ -6,7 +6,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --experimental-strip-types src/**/*.spec.{js,ts}",
+    "test:watch": "node --watch --experimental-strip-types src/**/*.spec.ts",
     "dev": "tsx watch --env-file=.env.dev src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -16,10 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "volta": {
-    "node": "20.11.1",
-    "yarn": "4.4.0"
-  },
   "devDependencies": {
     "@types/archiver": "^6.0.2",
     "@types/bluebird": "^3",
@@ -43,5 +40,9 @@
     "request-promise": "^4.2.6",
     "util": "^0.12.5",
     "youtube-dl-exec": "^3.0.7"
+  },
+  "volta": {
+    "node": "22.6.0",
+    "yarn": "4.4.0"
   }
 }

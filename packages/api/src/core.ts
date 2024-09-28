@@ -1,10 +1,13 @@
 import { ofetch } from "ofetch";
-import { YoutubeApi } from "./youtube.types.js";
+import type { YoutubeApi } from "./youtube.types.js";
 import youtubeDl from "youtube-dl-exec";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "fs";
 import archiver from "archiver";
+import type { DeezerApi } from "./deezer.types.js";
+import { playlistBuilder } from "./mocks.js";
+import { DeezerApiPlaylistRepository } from "./deezer-playlist.repository.js";
 
-type Song = {
+export type Song = {
   title: string;
   artist: string;
 };
@@ -18,7 +21,7 @@ export interface YoutubeSearch {
   searchSongUrl(song: Song): Promise<YoutubeUrl>;
 }
 
-type ZipFile = string;
+export type ZipFile = string;
 export interface VideosDownloader {
   downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile>;
 }
@@ -64,41 +67,6 @@ export class DeezerPlaylistToMp3UseCase {
   }
 }
 
-class InvalidPlaylistUrl extends Error {
-  constructor(playlistUrl: string) {
-    super(`${playlistUrl} is not a valid url`);
-  }
-}
-class DeezerPlaylistRepository implements PlaylistRepository {
-  async getPlaylistSongs(playlistUrl: string): Promise<Song[]> {
-    try {
-      new URL(playlistUrl);
-    } catch (err) {
-      throw new InvalidPlaylistUrl(playlistUrl);
-    }
-    const response = await fetch(playlistUrl, {
-      method: "GET",
-    });
-
-    const html = await response.text();
-
-    const stringifiedState = html.match(
-      /__DZR_APP_STATE__ = (.*)<\/script>/
-    )?.[1];
-
-    if (!stringifiedState) throw new Error("Could not find __DZR_APP_STATE__");
-
-    const state = JSON.parse(stringifiedState);
-
-    const songs = state.SONGS.data.map((song: any) => ({
-      title: song.SNG_TITLE as string,
-      artist: song.ART_NAME as string,
-    }));
-
-    return songs;
-  }
-}
-
 export class YoutubeSearchService implements YoutubeSearch {
   async searchSongUrl(song: Song): Promise<YoutubeUrl> {
     const query = `${song.title} ${song.artist}`;
@@ -126,11 +94,14 @@ export class LocalVideosDownloader implements VideosDownloader {
   }
 }
 
-type YoutubeMusicVideo = {
+export type YoutubeMusicVideo = {
   url: string;
   artist: string;
   track: string;
 };
+
+const isDev = process.env.DEV === "true";
+console.log({ isDev });
 export class YoutubeVideosDownloader implements VideosDownloader {
   private async downloadSingleVideo({
     youtubeUrl,
@@ -153,7 +124,7 @@ export class YoutubeVideosDownloader implements VideosDownloader {
 
   async downloadVideosToZip(videos: YoutubeMusicVideo[]): Promise<ZipFile> {
     const hash = Date.now().toString();
-    const folder = `tmp/${hash}`;
+    const folder = `public/tmp/${hash}`;
 
     const zipPath = `${folder}/audios.zip`;
 
@@ -170,7 +141,8 @@ export class YoutubeVideosDownloader implements VideosDownloader {
 
     await this.zipFiles({ files, zipPath });
 
-    return zipPath;
+    const zipPathUrl = zipPath.replace("public/", "");
+    return zipPathUrl;
   }
 
   private async zipFiles({
@@ -228,15 +200,11 @@ const createDirIfNotExists = (dir: string) => {
 export const buildDeezerPlaylistToMp3UseCase = (
   { localFiles } = { localFiles: false }
 ) => {
-  const playlistRepository = new DeezerPlaylistRepository();
+  const playlistRepository = new DeezerApiPlaylistRepository();
   const youtubeSearch = new YoutubeSearchService();
   const videosDownloader = localFiles
     ? new LocalVideosDownloader()
     : new YoutubeVideosDownloader();
 
-  return new DeezerPlaylistToMp3UseCase(
-    playlistRepository,
-    youtubeSearch,
-    videosDownloader
-  );
+  return { playlistRepository, youtubeSearch, videosDownloader };
 };
