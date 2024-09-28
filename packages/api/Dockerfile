@@ -43,7 +43,6 @@ WORKDIR /app
 
 COPY src src
 COPY package.json package.json 
-COPY ../../yarn.lock yarn.lock
 COPY tsconfig.json tsconfig.json
 COPY .yarnrc.yml .yarnrc.yml
 
