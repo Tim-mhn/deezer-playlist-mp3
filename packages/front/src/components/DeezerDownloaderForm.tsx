@@ -84,7 +84,7 @@ type SongsBatches = Array<ApiSongsBatch & { pending: boolean}>
 
       
 
-      const source = new EventSource(`//localhost:3000/events?playlistUrl=${playlistUrl}`, )
+      const source = new EventSource(`${import.meta.env.VITE_APP_API_BASE_URL}/events?playlistUrl=${playlistUrl}`, )
 
       source.onmessage = async function (event)  {
 
