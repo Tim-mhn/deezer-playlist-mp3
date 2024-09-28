@@ -5,6 +5,7 @@ import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "fs";
 import archiver from "archiver";
 import type { DeezerApi } from "./deezer.types.js";
 import { playlistBuilder } from "./mocks.js";
+import { DeezerApiPlaylistRepository } from "./deezer-playlist.repository.js";
 
 export type Song = {
   title: string;
@@ -63,79 +64,6 @@ export class DeezerPlaylistToMp3UseCase {
     console.log({ youtubeVideos });
 
     return await this.videosDownloader.downloadVideosToZip(youtubeVideos);
-  }
-}
-
-class InvalidPlaylistUrl extends Error {
-  constructor(playlistUrl: string) {
-    super(`${playlistUrl} is not a valid url`);
-  }
-}
-class DeezerPlaylistRepository implements PlaylistRepository {
-  async getPlaylistSongs(playlistUrl: string): Promise<Song[]> {
-    try {
-      new URL(playlistUrl);
-    } catch (err) {
-      throw new InvalidPlaylistUrl(playlistUrl);
-    }
-    const response = await fetch(playlistUrl, {
-      method: "GET",
-    });
-
-    const html = await response.text();
-
-    const stringifiedState = html.match(
-      /__DZR_APP_STATE__ = (.*)<\/script>/
-    )?.[1];
-
-    if (!stringifiedState) throw new Error("Could not find __DZR_APP_STATE__");
-
-    const state = JSON.parse(stringifiedState);
-
-    const songs = state.SONGS.data.map((song: any) => ({
-      title: song.SNG_TITLE as string,
-      artist: song.ART_NAME as string,
-    }));
-
-    return songs;
-  }
-}
-
-export class FakeDeezerPlaylistRepository implements PlaylistRepository {
-  async getPlaylistSongs(playlistId: string): Promise<Song[]> {
-    return playlistBuilder();
-  }
-}
-
-class DeezerApiPlaylistRepository implements PlaylistRepository {
-  constructor(private cookie: string) {}
-
-  async getPlaylistSongs(playlistId: string): Promise<Song[]> {
-    console.group("DeezerApiPlaylistRepository");
-
-    const res = await fetch(
-      `https://www.deezer.com/ajax/gw-light.php?method=deezer.pagePlaylist&input=3&api_version=1.0&api_token=${process.env.DEEZER_API_TOKEN}&cid=${process.env.DEEZER_API_CID}`,
-      {
-        method: "POST",
-        body: `{"playlist_id":${playlistId},"nb":10000,"start":0,"lang":"us","tab":0,"tags":true,"header":true}`,
-        headers: {
-          "Content-Type": "text/plain;charset=UTF-8",
-          Cookie: this.cookie,
-        },
-      }
-    );
-
-    const data = (await res.json()) as DeezerApi.PlaylistGetResponse;
-
-    console.log({ data: data.results });
-    console.log({ error: data.error });
-    console.groupEnd();
-    return (
-      data.results.SONGS?.data.map((song) => ({
-        title: song.SNG_TITLE,
-        artist: song.ART_NAME,
-      })) || []
-    );
   }
 }
 
@@ -272,11 +200,7 @@ const createDirIfNotExists = (dir: string) => {
 export const buildDeezerPlaylistToMp3UseCase = (
   { localFiles } = { localFiles: false }
 ) => {
-  const deezerApiCookie = process.env.DEEZER_API_COOKIE;
-  if (!deezerApiCookie)
-    throw new Error("DEEZER_API_COOKIE environment variable not provided");
-
-  const playlistRepository = new DeezerApiPlaylistRepository(deezerApiCookie);
+  const playlistRepository = new DeezerApiPlaylistRepository();
   const youtubeSearch = new YoutubeSearchService();
   const videosDownloader = localFiles
     ? new LocalVideosDownloader()

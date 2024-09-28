@@ -6,8 +6,7 @@ export function HelpNote() {
 
       <div className="text-md">
         This Deezer to MP3 Downloader allows you to convert your favorite Deezer
-        playlists to MP3 (audio). It will generate a .zip file containing the <strong> 40
-        first songs </strong> of your playlist.
+        playlists to MP3 (audio). It will generate multiple zip files of 20 songs maximum each.
       </div>
 
       <div className="text-lg font-medium text-center mt-4">How to download a Deezer playlist ?</div>
