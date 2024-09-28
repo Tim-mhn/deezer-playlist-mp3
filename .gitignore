@@ -4,3 +4,5 @@ files
 .yarn
 tmp
 .env
+*.mp3
+*.mp3.*

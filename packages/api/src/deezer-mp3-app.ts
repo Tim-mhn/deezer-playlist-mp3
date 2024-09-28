@@ -57,11 +57,6 @@ const batches = <T>(arr: Array<T>, size: number) =>
     arr.slice(i * size, i * size + size)
   );
 
-class FetchDeezerPlaylistError extends Error {
-  constructor(playlistId: string) {
-    super(`An error occurred when fetching the deezer playlist ${playlistId}`);
-  }
-}
 export class Deezer2Mp3App {
   filesPublisher!: DownloadedFilesPublisher;
   playlistRepository!: PlaylistRepository;
@@ -78,12 +73,7 @@ export class Deezer2Mp3App {
   }
 
   async downloadPlaylistSongs(playlistId: string, options = { batchSize: 40 }) {
-    let songs: Song[] = [];
-    try {
-      songs = await this.playlistRepository.getPlaylistSongs(playlistId);
-    } catch (err) {
-      throw new FetchDeezerPlaylistError(playlistId);
-    }
+    const songs = await this.playlistRepository.getPlaylistSongs(playlistId);
 
     console.log({ songs: songs });
     const songsBatches: SongBatch[] = batches(songs, options.batchSize).map(

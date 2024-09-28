@@ -1,8 +1,7 @@
 import express from "express";
-import path, { resolve } from "node:path";
+import path from "node:path";
 import {
   buildDeezerPlaylistToMp3UseCase,
-  FakeDeezerPlaylistRepository,
   type YoutubeMusicVideo,
 } from "./core.js";
 import { createReadStream } from "node:fs";
@@ -78,60 +77,83 @@ const deezerMp3App = new Deezer2Mp3App(
   songsDownloader
 );
 
-app.get("/deezer-mp3", async (req, res) => {
-  const { playlistUrl } = req.query;
-
-  console.group("/deezer-mp3 called");
-  console.log({ playlistUrl });
-
-  if (!playlistUrl) {
-    res.status(400).send({
-      error: "Missing query parameter 'playlistUrl'",
-    });
+class MissingQueryParameter extends Error {
+  constructor(param: string) {
+    super(`Missing query parameter '${param}'`);
+    this.name = "MissingQueryParameter";
   }
+}
 
-  if (typeof playlistUrl !== "string") {
-    res.status(400).send({
-      error:
-        "Invalid type for query parameter 'playlistUrl'. Must be a string ",
-    });
+class InvalidQueryParam extends Error {
+  constructor(param: string, type: string) {
+    super(`Invalid type for query parameter '${param}'. Must be a ${type}`);
+    this.name = "InvalidQueryParam";
   }
+}
 
-  const playlistId = playlistUrl?.toString()?.split("/playlist/")[1];
+class InvalidUrl extends Error {
+  constructor(url: string) {
+    super(`${url} is not a valid url`);
+    this.name = "InvalidUrl";
+  }
+}
 
-  console.log({ playlistId });
-  if (!playlistId)
-    throw new Error(`Could not retrieve playlistId from url ${playlistUrl}`);
+class CouldNotRetrievePlaylistIdFromUrl extends Error {
+  constructor(url: string) {
+    super(`Could not retrieve playlistId from url ${url}`);
+    this.name = "CouldNotRetrievePlaylistIdFromUrl";
+  }
+}
+function validatePlaylistUrl(
+  playlistUrl?: unknown
+): asserts playlistUrl is string {
+  if (!playlistUrl) throw new InvalidQueryParam("playlistUrl", "string");
+
+  if (typeof playlistUrl !== "string")
+    throw new InvalidQueryParam("playlistUrl", "string");
 
   try {
+    new URL(playlistUrl);
+  } catch (err) {
+    throw new InvalidUrl(playlistUrl);
+  }
+}
+
+function retrievePlaylistIdFromUrl(playlistUrl: unknown) {
+  validatePlaylistUrl(playlistUrl);
+  const playlistId = playlistUrl?.toString()?.split("/playlist/")[1];
+  if (!playlistId) throw new CouldNotRetrievePlaylistIdFromUrl(playlistUrl);
+  return playlistId;
+}
+app.get("/deezer-mp3", async (req, res) => {
+  try {
+    const { playlistUrl } = req.query;
+
+    console.group("/deezer-mp3 called");
+    console.log({ playlistUrl });
+
+    const playlistId = retrievePlaylistIdFromUrl(playlistUrl);
+
     const songsBatches = await deezerMp3App.downloadPlaylistSongs(playlistId, {
-      batchSize: 15,
+      batchSize: 20,
     });
 
     console.log({ songsBatches });
     res.status(200).send(songsBatches);
     return;
-
-    // const relativeFile = await usecase.downloadPlaylistSongs(
-    //   playlistUrl as string
-    // );
-
-    // const file = resolve(relativeFile);
-
-    // res
-    //   .set("Content-Disposition", `attachment; filename="audios.zip"`)
-    //   .setHeader("Content-Type", "application/zip");
-
-    // // Stream the file to the client
-    // const fileStream = createReadStream(file);
-    // fileStream.pipe(res);
   } catch (err) {
     console.log(err);
+
+    if (err instanceof Error) {
+      res.status(500).send({
+        error: err.message,
+        name: err.name,
+      });
+      return;
+    }
+
     res.status(500).send({
-      error:
-        err && typeof err === "object" && "message" in err
-          ? err?.message
-          : "Unexpected error",
+      error: "Unexpected error",
     });
   }
 });
