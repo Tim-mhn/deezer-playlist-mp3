@@ -125,6 +125,14 @@ function retrievePlaylistIdFromUrl(playlistUrl: unknown) {
   if (!playlistId) throw new CouldNotRetrievePlaylistIdFromUrl(playlistUrl);
   return playlistId;
 }
+
+const batchSize = (() => {
+  const n = Number.parseInt(process.env.BATCH_SIZE || "");
+  if (Number.isNaN(n)) return 20;
+  return n;
+})();
+
+console.log({ batchSize });
 app.get("/deezer-mp3", async (req, res) => {
   try {
     const { playlistUrl } = req.query;
@@ -135,7 +143,7 @@ app.get("/deezer-mp3", async (req, res) => {
     const playlistId = retrievePlaylistIdFromUrl(playlistUrl);
 
     const songsBatches = await deezerMp3App.downloadPlaylistSongs(playlistId, {
-      batchSize: 20,
+      batchSize,
     });
 
     console.log({ songsBatches });
